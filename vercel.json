@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/proxy-hidencloud/:path*",
+      "destination": "http://wally.hidencloud.com:24601/api/:path*"
+    },
+    {
+      "source": "/proxy-eresh/:path*",
+      "destination": "http://145.239.65.118:20034/:path*"
+    }
+  ]
+}
