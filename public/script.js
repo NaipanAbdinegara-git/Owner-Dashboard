@@ -120,33 +120,23 @@ async function verifyAuth() {
 
 // BOT COMMAND
 async function executeMaintenance() {
-    console.log("Menembak sinyal maintenance..."); 
     try {
-        // Kita tambah body kosong dan header lengkap
-        const res = await fetch('/proxy-eresh/maintenance', { 
+        const res = await fetch('/proxy-eresh/toggle-mt', { // Ganti ke toggle-mt
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({}) // Paksa kirim body biar POST-nya valid
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: "x4solid" }) // Kirim password sesuai index.js lo
         });
 
-        if (!res.ok) {
-            // Kalau dapet 404 di sini, berarti Vercel salah rute
-            const errorText = await res.text();
-            throw new Error(`Server respon ${res.status}: ${errorText}`);
-        }
-
         const data = await res.json();
-        alert(`BOT STATUS: ${data.maintenance ? 'HIBERNASI 🛠️' : 'AKTIF 🚀'}`);
-        
-        // Refresh dot status di UI
-        await triggerRescan();
-        
+
+        if (data.success) {
+            alert(`BOT STATUS: ${data.maintenance ? 'HIBERNASI 🛠️' : 'AKTIF 🚀'}`);
+            triggerRescan();
+        } else {
+            alert("Gagal: " + (data.message || "Unknown Error"));
+        }
     } catch (e) {
-        console.error("Detail Error Maintenance:", e);
-        alert("Gagal: " + e.message);
+        alert("Gagal koneksi ke Engine Bot: " + e.message);
     }
 }
 
@@ -195,4 +185,5 @@ async function delMem(id) {
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
 document.addEventListener('DOMContentLoaded', () => { initUI(); triggerRescan(); });
+
 
