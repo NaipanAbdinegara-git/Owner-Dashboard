@@ -1,5 +1,6 @@
 /**
- * NAIPAN DASHBOARD CORE ENGINE - FINAL REWRITE
+ * NAIPAN DASHBOARD CORE ENGINE - V2.0
+ * Updated: Feb 2026
  */
 
 const SERVICES = [
@@ -15,7 +16,23 @@ const SERVICES = [
 const API_CHRONICLES = "/proxy-hidencloud/memories";
 let currentAction = null;
 
-// UI INITIALIZER
+// --- 1. CLOCK SYSTEM ---
+function startClock() {
+    const clockElement = document.getElementById('clock');
+    if (!clockElement) return;
+
+    setInterval(() => {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        clockElement.innerText = `${hours}:${minutes}`;
+        
+        // Efek kedip pada titik dua
+        clockElement.style.opacity = now.getSeconds() % 2 === 0 ? "1" : "0.7";
+    }, 1000);
+}
+
+// --- 2. UI INITIALIZER ---
 function initUI() {
     SERVICES.forEach(s => {
         const container = document.getElementById(`cluster-${s.cluster}`);
@@ -25,7 +42,7 @@ function initUI() {
         el.innerHTML = `
             <div class="overflow-hidden">
                 <p class="text-sm font-bold text-slate-800 truncate">${s.name}</p>
-                <p class="text-[10px] text-slate-400 font-medium truncate w-32">${s.url.replace('/proxy-eresh/ping','IP:20034')}</p>
+                <p class="text-[10px] text-slate-400 font-medium truncate w-32">${s.url.replace('/proxy-eresh/ping','Eresh Engine')}</p>
             </div>
             <div class="flex items-center gap-3">
                 <div class="text-right">
@@ -38,7 +55,7 @@ function initUI() {
     });
 }
 
-// MONITORING LOGIC
+// --- 3. MONITORING LOGIC ---
 async function ping(service) {
     const dot = document.getElementById(`dot-${service.id}`);
     const statusText = document.getElementById(`status-${service.id}`);
@@ -46,7 +63,9 @@ async function ping(service) {
     const start = Date.now();
 
     try {
-        const options = service.isBot ? { cache: 'no-store' } : { mode: 'no-cors', cache: 'no-store' };
+        const options = { cache: 'no-store', timeout: 5000 };
+        if (!service.isBot) options.mode = 'no-cors';
+
         const res = await fetch(service.url, options);
         const lat = Date.now() - start;
         if (latText) latText.innerText = lat + "ms";
@@ -69,7 +88,7 @@ async function ping(service) {
     }
 }
 
-// SCANNING SYSTEM
+// --- 4. SCANNING SYSTEM ---
 async function triggerRescan() {
     const btn = document.getElementById('rescan-btn');
     const status = document.getElementById('global-status');
@@ -82,6 +101,7 @@ async function triggerRescan() {
         await new Promise(r => setTimeout(r, 400));
         if (clusterDiv) clusterDiv.style.opacity = "1";
     }
+    
     btn?.classList.remove('btn-scanning');
     if (status) {
         status.innerText = "SYSTEM OPTIMIZED";
@@ -89,10 +109,11 @@ async function triggerRescan() {
     }
 }
 
-// AUTH & ACTION HANDLER
+// --- 5. AUTH & ACTION HANDLER ---
 function requestAuth(action) {
     currentAction = action;
     document.getElementById('authModal').classList.remove('hidden');
+    document.getElementById('auth-code').value = ""; // Reset input
     document.getElementById('auth-code').focus();
 }
 
@@ -113,38 +134,43 @@ async function verifyAuth() {
             closeModal('authModal');
             if (currentAction === 'database') openDbManager();
             if (currentAction === 'maintenance') executeMaintenance();
-        } else { alert("Kode Salah!"); }
-    } catch (err) { alert("Sistem Error"); }
-    finally { btn.disabled = false; }
+        } else { 
+            alert("Kode Salah, Pan!"); 
+        }
+    } catch (err) { 
+        alert("Sistem Verifikasi Error"); 
+    } finally { 
+        btn.disabled = false; 
+    }
 }
 
-// BOT COMMAND
+// --- 6. BOT COMMAND (MAINTENANCE TOGGLE) ---
 async function executeMaintenance() {
     try {
-        const res = await fetch('/proxy-eresh/toggle-mt', { // Ganti ke toggle-mt
+        const res = await fetch('/proxy-eresh/toggle-mt', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: "x4solid" }) // Kirim password sesuai index.js lo
+            body: JSON.stringify({ password: "x4solid" })
         });
 
         const data = await res.json();
 
         if (data.success) {
-            alert(`BOT STATUS: ${data.maintenance ? 'HIBERNASI 🛠️' : 'AKTIF 🚀'}`);
+            alert(`BOT ERESH: ${data.maintenance ? 'MASUK MODE HIBERNASI 💤' : 'SUDAH BANGUN/AKTIF 🚀'}`);
             triggerRescan();
         } else {
-            alert("Gagal: " + (data.message || "Unknown Error"));
+            alert("Gagal: " + (data.message || "Password salah atau rute error."));
         }
     } catch (e) {
-        alert("Gagal koneksi ke Engine Bot: " + e.message);
+        alert("Gagal koneksi ke Engine Bot. Pastikan VPS jalan!");
     }
 }
 
-// CHRONICLES CRUD
+// --- 7. CHRONICLES CRUD ---
 async function openDbManager() {
     document.getElementById('dbModal').classList.remove('hidden');
     const container = document.getElementById('dbContent');
-    container.innerHTML = "Loading...";
+    container.innerHTML = "<div class='p-10 text-center animate-pulse text-slate-400'>Syncing Database...</div>";
 
     try {
         const res = await fetch(API_CHRONICLES);
@@ -153,37 +179,47 @@ async function openDbManager() {
         data.forEach(m => {
             html += `
             <tr class="bg-slate-50/50 rounded-2xl">
-                <td class="p-4"><input type="text" id="t-${m.id}" value="${m.title}" class="bg-transparent font-bold w-full"></td>
-                <td class="p-4"><input type="text" id="s-${m.id}" value="${m.sender}" class="bg-transparent text-sm w-full"></td>
-                <td class="p-4 text-right">
-                    <button onclick="saveMem('${m.id}')" class="bg-green-500 text-white p-2 rounded-lg text-xs">SAVE</button>
-                    <button onclick="delMem('${m.id}')" class="bg-red-500 text-white p-2 rounded-lg text-xs">DEL</button>
+                <td class="p-4"><input type="text" id="t-${m.id}" value="${m.title}" class="bg-transparent font-bold w-full outline-none focus:text-blue-600"></td>
+                <td class="p-4"><input type="text" id="s-${m.id}" value="${m.sender}" class="bg-transparent text-sm w-full outline-none"></td>
+                <td class="p-4 text-right flex gap-2 justify-end">
+                    <button onclick="saveMem('${m.id}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs transition">SAVE</button>
+                    <button onclick="delMem('${m.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs transition">DEL</button>
                 </td>
             </tr>`;
         });
         container.innerHTML = html + `</table>`;
-    } catch (e) { container.innerHTML = "Sync Failed."; }
+    } catch (e) { 
+        container.innerHTML = "<div class='p-10 text-center text-red-500 font-bold'>FAILED TO FETCH DATA</div>"; 
+    }
 }
 
 async function saveMem(id) {
     const title = document.getElementById(`t-${id}`).value;
     const sender = document.getElementById(`s-${id}`).value;
-    const res = await fetch(`${API_CHRONICLES}/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, sender })
-    });
-    if (res.ok) alert("Saved!");
+    try {
+        const res = await fetch(`${API_CHRONICLES}/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, sender })
+        });
+        if (res.ok) alert("Memory Updated! ✨");
+    } catch (e) { alert("Save Failed."); }
 }
 
 async function delMem(id) {
-    if (!confirm("Hapus?")) return;
-    const res = await fetch(`${API_CHRONICLES}/${id}`, { method: 'DELETE' });
-    if (res.ok) openDbManager();
+    if (!confirm("Hapus memori ini secara permanen?")) return;
+    try {
+        const res = await fetch(`${API_CHRONICLES}/${id}`, { method: 'DELETE' });
+        if (res.ok) openDbManager();
+    } catch (e) { alert("Delete Failed."); }
 }
 
+// --- 8. UTILS ---
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-document.addEventListener('DOMContentLoaded', () => { initUI(); triggerRescan(); });
-
-
+// --- BOOTSTRAP ---
+document.addEventListener('DOMContentLoaded', () => { 
+    initUI(); 
+    triggerRescan(); 
+    startClock(); 
+});
