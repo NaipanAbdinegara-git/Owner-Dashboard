@@ -4,12 +4,14 @@ const SERVICES = [
     { id: 'ev-api', name: "GAS Proxy API", url: "https://notfun.my.id/api/proxy-gas", cluster: "ev" },
     { id: 'ev-mon', name: "Stats Monitor", url: "https://notfun.my.id/monitor.html", cluster: "ev" },
     { id: 'ch-web', name: "Chronicles Portal", url: "https://chroniclesmemories.vercel.app", cluster: "ch" },
-    { id: 'ch-api', name: "HidenCloud API", url: "http://wally.hidencloud.com:24601/api/memories", cluster: "ch" },
+    // GANTI URL DI BAWAH INI PAKAI PROXY
+    { id: 'ch-api', name: "HidenCloud API", url: "/proxy-hidencloud/memories", cluster: "ch" }, 
     { id: 'main-web', name: "Naipan Portfolio", url: "https://naipan.my.id", cluster: "infra" },
-    { id: 'bot-srv', name: "Eresh Bot Engine", url: "http://145.239.65.118:20034/ping", cluster: "infra", isBot: true }
+    // GANTI URL DI BAWAH INI PAKAI PROXY
+    { id: 'bot-srv', name: "Eresh Bot Engine", url: "/proxy-eresh/ping", cluster: "infra", isBot: true }
 ];
 
-const API_CHRONICLES = "http://wally.hidencloud.com:24601/api/memories";
+const API_CHRONICLES = "/proxy-hidencloud/memories";
 let currentAction = null;
 
 // UI RENDERER
@@ -180,4 +182,5 @@ setInterval(() => {
 document.addEventListener('DOMContentLoaded', () => { 
     initUI(); 
     triggerRescan(); 
+
 });
